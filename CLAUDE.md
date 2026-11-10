@@ -85,8 +85,8 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 - [x] 4. Frontend (login, doc list tabs, editor, toolbar, autosave, share, import)
 - [x] 5. Render deploy (web service + Postgres)
 - [x] 6. GitHub Pages deploy (Actions workflow)
-- [ ] 7. Live end-to-end check
-- [ ] 8. Docs (README, known limitations, next steps)
+- [x] 7. Live end-to-end check
+- [x] 8. Docs (README, known limitations, next steps)
 
 ## Working rules
 - One phase at a time. Don't start the next phase until the user says so.
