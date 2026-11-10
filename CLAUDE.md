@@ -73,7 +73,7 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 - [x] 1. Repo and project skeleton
 - [x] 2. Backend (models, auth, documents, sharing, import, access rules)
 - [x] 3. Backend tests (pytest)
-- [ ] 4. Frontend (login, doc list tabs, editor, toolbar, autosave, share, import)
+- [x] 4. Frontend (login, doc list tabs, editor, toolbar, autosave, share, import)
 - [ ] 5. Render deploy (web service + Postgres)
 - [ ] 6. GitHub Pages deploy (Actions workflow)
 - [ ] 7. Live end-to-end check

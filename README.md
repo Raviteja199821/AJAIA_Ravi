@@ -27,10 +27,24 @@ _To be written once the features are implemented._
 
 ## Local setup
 ### Backend
-_TBD_
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload        # http://localhost:8000
+```
+With no `DATABASE_URL` set, it uses SQLite (`backend/local.db`) and seeds the demo users on startup.
+If `backend/.env` holds the Render `DATABASE_URL`, the local server talks to that database instead.
 
 ### Frontend
-_TBD_
+Needs Node 18+ (22 recommended).
+```bash
+cd frontend
+npm install
+echo "VITE_API_URL=http://localhost:8000" > .env.local   # backend URL, no trailing slash
+npm run dev                                              # http://localhost:5173
+```
+`npm run build` writes a production build to `frontend/dist/`.
 
 ## Running tests
 ```bash
