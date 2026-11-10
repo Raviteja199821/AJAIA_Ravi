@@ -33,7 +33,13 @@ _TBD_
 _TBD_
 
 ## Running tests
-_TBD_
+```bash
+cd backend && source .venv/bin/activate && python -m pytest -q
+```
+Covers the sharing roles end to end through the API (no access → 404, viewer read-only → 403,
+editor can edit but not delete or share, re-share updates the role, unshare revokes access),
+import validation and conversion (.md → HTML, unsupported or empty file → 400), and auth (401 without a token).
+Tests run on an in-memory SQLite database; `conftest.py` refuses to run against anything else.
 
 ## Deployment
 _TBD_
