@@ -12,6 +12,11 @@ is solid, tested and deployed beats many half-finished features.
 - Frontend (GitHub Pages): https://raviteja199821.github.io/AJAIA_Ravi/
 - Vite production base: `/AJAIA_Ravi/` (case-sensitive), set via `VITE_BASE`
 - Backend CORS origin: `https://raviteja199821.github.io` (no path)
+- Backend API (Render): https://ajaia-docs-api-r2ve.onrender.com
+  (service `srv-dbp61tff3r2c73f6a310`, Oregon, free, auto-deploy on commit to `main`)
+- Render Postgres: `ajaia-docs-db` (`dpg-dbp5udetlv9c73ekcft0-a`), Oregon, free, PG 18,
+  **expires 2026-12-10**. Render workspace `tea-dbp5j388v5cc73d8jqsg`.
+- Render env vars (dashboard only): `DATABASE_URL` (internal), `FRONTEND_ORIGIN`, `PYTHON_VERSION=3.13.5`
 
 ## Stack and folder ownership
 | Folder      | Owns | Tech | Deployed to |
@@ -67,6 +72,8 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 - CORS: allow the origins in `FRONTEND_ORIGIN` (comma-separated) **plus** `http://localhost:5173`.
 - Use **HashRouter** (GitHub Pages has no SPA fallback).
 - The Pages workflow builds with `VITE_BASE=/AJAIA_Ravi/`.
+- Render auto-deploy on push has NOT fired so far (no deploy and no `commit_ignored` event).
+  After pushing backend changes, check `list_deploys` and run `trigger_deploy` if nothing started.
 - **Never commit secrets.** Only `.env.example` files are tracked.
 
 ## Phases
@@ -74,7 +81,7 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 - [x] 2. Backend (models, auth, documents, sharing, import, access rules)
 - [x] 3. Backend tests (pytest)
 - [x] 4. Frontend (login, doc list tabs, editor, toolbar, autosave, share, import)
-- [ ] 5. Render deploy (web service + Postgres)
+- [x] 5. Render deploy (web service + Postgres)
 - [ ] 6. GitHub Pages deploy (Actions workflow)
 - [ ] 7. Live end-to-end check
 - [ ] 8. Docs (README, known limitations, next steps)

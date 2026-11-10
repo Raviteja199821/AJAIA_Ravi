@@ -56,7 +56,24 @@ import validation and conversion (.md → HTML, unsupported or empty file → 40
 Tests run on an in-memory SQLite database; `conftest.py` refuses to run against anything else.
 
 ## Deployment
-_TBD_
+### Backend: Render (free tier)
+- **API:** https://ajaia-docs-api-r2ve.onrender.com (health check: `/health`)
+- A Render web service (`rootDir: backend`, Python 3.13) plus Render Postgres, both in Oregon.
+  It auto-deploys on every push to `main`.
+- Build: `pip install -r requirements.txt`; start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+  Tables are created and the demo data is seeded on first startup.
+- **Environment variables** are set in the Render dashboard (ajaia-docs-api → Environment), never in git:
+  - `DATABASE_URL`: the database's *Internal* connection string
+  - `FRONTEND_ORIGIN`: `https://raviteja199821.github.io` (comma-separated, no path)
+  - `PYTHON_VERSION`: `3.13.5`
+- On Render the app refuses to start without `DATABASE_URL`, so it can never quietly fall back to SQLite.
+- [`render.yaml`](render.yaml) is a blueprint that recreates the same setup from scratch.
+- **Cold starts:** free services sleep after ~15 minutes idle, and the first request then takes
+  ~1 minute. The frontend shows a "Waking up the server…" banner while that happens.
+- The free Postgres instance expires 30 days after creation.
+
+### Frontend: GitHub Pages
+_Added in Phase 6._
 
 ## Known limitations
 _TBD_
