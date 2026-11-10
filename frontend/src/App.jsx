@@ -1,41 +1,60 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { api, getSession, setSession } from "./api.js";
+import { api, getSession, isServerAwake, onServerAwake, setSession } from "./api.js";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import EditorRoute from "./pages/Editor.jsx";
 
+const SHOW_AFTER_MS = 1500; // only show the banner if nothing has answered by then
+const PING_TIMEOUT_MS = 10000; // abort a hung /health so the retry loop keeps going
+const RETRY_MS = 3000;
+
 function WakeBanner() {
-  const [waking, setWaking] = useState(false);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
-    let done = false;
+    if (isServerAwake()) return undefined;
+
+    let cancelled = false; // per effect run (StrictMode mounts twice in dev)
+    let showTimer;
     let retryTimer;
-    const slowTimer = setTimeout(() => !done && setWaking(true), 1500);
+
+    const stop = () => {
+      clearTimeout(showTimer);
+      clearTimeout(retryTimer);
+    };
+    const awake = () => {
+      stop();
+      if (!cancelled) setSlow(false);
+    };
+
+    // Any successful API call anywhere in the app (login, docs list…) proves it's awake.
+    const unsubscribe = onServerAwake(awake);
+
+    showTimer = setTimeout(() => {
+      if (!cancelled && !isServerAwake()) setSlow(true);
+    }, SHOW_AFTER_MS);
 
     const ping = async () => {
       try {
-        await api.health();
-        done = true;
-        clearTimeout(slowTimer);
-        setWaking(false);
+        await api.health({ timeoutMs: PING_TIMEOUT_MS });
+        awake(); // any successful /health response
       } catch {
-        if (!done) {
-          setWaking(true);
-          retryTimer = setTimeout(ping, 3000);
-        }
+        if (cancelled || isServerAwake()) return;
+        setSlow(true);
+        retryTimer = setTimeout(ping, RETRY_MS);
       }
     };
     ping();
 
     return () => {
-      done = true;
-      clearTimeout(slowTimer);
-      clearTimeout(retryTimer);
+      cancelled = true;
+      stop();
+      unsubscribe();
     };
   }, []);
 
-  if (!waking) return null;
+  if (!slow) return null;
   return (
     <div className="wake-banner" role="status">
       Waking up the server (free hosting sleeps when idle) — this can take up to a minute…

@@ -26,7 +26,28 @@ function errorDetail(data, status) {
   return `Request failed (${status})`;
 }
 
-async function request(path, { method = "GET", body, form } = {}) {
+// ---- "server is awake" signal -------------------------------------------------
+// Any response from our app (anything except a 5xx from Render's proxy while the
+// instance boots) proves the server is up. The wake banner subscribes to this.
+let serverAwake = false;
+const awakeListeners = new Set();
+
+export function isServerAwake() {
+  return serverAwake;
+}
+
+export function onServerAwake(listener) {
+  awakeListeners.add(listener);
+  return () => awakeListeners.delete(listener);
+}
+
+function markServerAwake() {
+  if (serverAwake) return;
+  serverAwake = true;
+  awakeListeners.forEach((fn) => fn());
+}
+
+async function request(path, { method = "GET", body, form, timeoutMs, cache } = {}) {
   const headers = {};
   const token = getSession()?.token;
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -39,12 +60,23 @@ async function request(path, { method = "GET", body, form } = {}) {
     payload = JSON.stringify(body);
   }
 
+  // Optional timeout: aborting matters, because a hung request otherwise never settles
+  // (and Chrome queues identical GETs behind it).
+  const controller = timeoutMs ? new AbortController() : null;
+  const timer = controller && setTimeout(() => controller.abort(), timeoutMs);
+
   let res;
   try {
-    res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
+    res = await fetch(`${BASE}${path}`, {
+      method, headers, body: payload, cache, signal: controller?.signal,
+    });
   } catch {
     throw new Error("Can't reach the server. It may be waking up — try again in a few seconds.");
+  } finally {
+    clearTimeout(timer);
   }
+
+  if (res.status < 500) markServerAwake();
 
   if (res.status === 401 && path !== "/auth/login") {
     setSession(null);
@@ -65,7 +97,7 @@ async function request(path, { method = "GET", body, form } = {}) {
 const json = (method, body) => ({ method, body });
 
 export const api = {
-  health: () => request("/health"),
+  health: ({ timeoutMs = 10000 } = {}) => request("/health", { timeoutMs, cache: "no-store" }),
   login: (username, password) => request("/auth/login", json("POST", { username, password })),
   users: () => request("/users"),
   listDocs: () => request("/documents"),
