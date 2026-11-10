@@ -61,7 +61,9 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 | GET    | `/health` | liveness, no auth |
 
 ## Gotchas
-- Render gives `DATABASE_URL` as `postgres://…`. Rewrite it to `postgresql://…` for SQLAlchemy.
+- Render gives `DATABASE_URL` as `postgres://…`. `db.py` rewrites it to `postgresql+psycopg2://…`
+  (SQLAlchemy 2.1 defaults bare `postgresql://` to psycopg v3, which we don't install).
+- The real `DATABASE_URL` goes only in `backend/.env` (gitignored), never in `.env.example`.
 - CORS: allow the origins in `FRONTEND_ORIGIN` (comma-separated) **plus** `http://localhost:5173`.
 - Use **HashRouter** (GitHub Pages has no SPA fallback).
 - The Pages workflow builds with `VITE_BASE=/AJAIA_Ravi/`.
@@ -69,7 +71,7 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 
 ## Phases
 - [x] 1. Repo and project skeleton
-- [ ] 2. Backend (models, auth, documents, sharing, import, access rules)
+- [x] 2. Backend (models, auth, documents, sharing, import, access rules)
 - [ ] 3. Backend tests (pytest)
 - [ ] 4. Frontend (login, doc list tabs, editor, toolbar, autosave, share, import)
 - [ ] 5. Render deploy (web service + Postgres)
