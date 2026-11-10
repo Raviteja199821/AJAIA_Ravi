@@ -1,11 +1,17 @@
 # Ajaia Docs
 
+**Live demo: https://raviteja199821.github.io/AJAIA_Ravi/**. Sign in as `alice`, `bob` or `carol` (password `demo123`).
+
+> The API runs on Render's free tier and sleeps when idle. The first load after a quiet
+> period can take about a minute; a "Waking up the server…" banner shows while it starts.
+
 ## Overview
 A lightweight collaborative document editor: rich-text editing with autosave,
 file import and per-document sharing. _(Details to come.)_
 
 ## Live demo
-https://raviteja199821.github.io/AJAIA_Ravi/ _(available after deployment)_
+- App: https://raviteja199821.github.io/AJAIA_Ravi/
+- API: https://ajaia-docs-api-r2ve.onrender.com/health
 
 ## Demo accounts
 | Username | Password |
@@ -73,7 +79,15 @@ Tests run on an in-memory SQLite database; `conftest.py` refuses to run against 
 - The free Postgres instance expires 30 days after creation.
 
 ### Frontend: GitHub Pages
-_Added in Phase 6._
+- **App:** https://raviteja199821.github.io/AJAIA_Ravi/
+- [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs on every push to `main` that touches
+  `frontend/**` (or by hand from the Actions tab). It runs `npm ci`, then `npm run build`, and publishes `frontend/dist` with
+  `actions/deploy-pages`. Pages is set to use **GitHub Actions** as its source.
+- Build settings:
+  - `VITE_API_URL` comes from the repository **variable** of the same name
+    (Settings → Secrets and variables → Actions → Variables). The build fails if it's empty.
+  - `VITE_BASE=/AJAIA_Ravi/` makes asset paths match the Pages sub-path.
+- Routing uses `HashRouter` (`#/doc/1`), so deep links and refreshes work without a server-side SPA fallback.
 
 ## Known limitations
 _TBD_

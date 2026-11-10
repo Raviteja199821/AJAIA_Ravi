@@ -9,7 +9,9 @@ is solid, tested and deployed beats many half-finished features.
 
 ## Repo facts
 - GitHub: `Raviteja199821/AJAIA_Ravi` (public), default branch `main`
-- Frontend (GitHub Pages): https://raviteja199821.github.io/AJAIA_Ravi/
+- Frontend (GitHub Pages, LIVE): https://raviteja199821.github.io/AJAIA_Ravi/
+  (workflow `.github/workflows/deploy.yml`, Pages source = GitHub Actions,
+  repo variable `VITE_API_URL=https://ajaia-docs-api-r2ve.onrender.com`)
 - Vite production base: `/AJAIA_Ravi/` (case-sensitive), set via `VITE_BASE`
 - Backend CORS origin: `https://raviteja199821.github.io` (no path)
 - Backend API (Render): https://ajaia-docs-api-r2ve.onrender.com
@@ -82,7 +84,7 @@ Locally the backend uses SQLite (`backend/local.db`) when `DATABASE_URL` is unse
 - [x] 3. Backend tests (pytest)
 - [x] 4. Frontend (login, doc list tabs, editor, toolbar, autosave, share, import)
 - [x] 5. Render deploy (web service + Postgres)
-- [ ] 6. GitHub Pages deploy (Actions workflow)
+- [x] 6. GitHub Pages deploy (Actions workflow)
 - [ ] 7. Live end-to-end check
 - [ ] 8. Docs (README, known limitations, next steps)
 
