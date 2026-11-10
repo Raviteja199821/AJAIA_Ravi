@@ -1,52 +1,72 @@
-> **DRAFT — Ravi to edit in his own words.** The facts below are accurate for this project;
-> the wording and opinions should be rewritten by me before submission.
+# How I used AI on this project
 
-# AI workflow
+## Tools I used
+I used two tools, for two different jobs:
 
-## Tools
-- **Claude (chat)** to plan the stack and the 8 phases, and to write a detailed prompt for each phase.
-- **Claude Code in VS Code** for the implementation, working through the **gh CLI** for GitHub
-  (repo variables, Pages, Actions runs) and the **Render MCP connector** for Render (services, deploys, logs).
-- I reviewed each phase's report, ran the manual checks, and made the account- and secret-related
-  changes myself (Render env vars, GitHub login).
+- **Claude (chat)** was my planning partner. I used it to settle the tech stack, break the work into
+  eight phases, and write a detailed prompt for each phase. It also helped me when I got stuck on
+  setup problems like GitHub login and Render configuration.
+- **Claude Code in VS Code** did most of the implementation. It used the `gh` CLI for GitHub
+  (pushing, repo variables, Pages, Actions) and the Render MCP connector for Render (services,
+  deploys, logs).
 
-## Where AI sped things up
-- **Scaffolding:** repo layout, `CLAUDE.md` project brief, `.gitignore`/`.editorconfig`, Vite config.
-- **Backend:** models, the single `access.py` permission module, auth, importers, and the routes,
-  including curl checks after each step.
-- **Tests:** the pytest suite for sharing roles, import and auth, plus a live smoke script.
-- **UI:** the dashboard, editor with toolbar and autosave, share dialog, and styling.
-- **Deploy config:** the GitHub Pages workflow, `render.yaml`, and reading Render deploy logs.
+I kept anything involving accounts or secrets in my own hands: Render environment variables,
+the database URL, and GitHub authentication. After every phase I read Claude Code's report and
+checked the results myself before moving on.
 
-## What was changed or rejected
-- **Python 3.13 instead of 3.12:** pinned to match the local venv, so local and Render use the same version.
-- **psycopg2 named explicitly:** SQLAlchemy 2.1 changed the default `postgresql://` driver to psycopg v3.
-  The first Postgres connection failed, so `db.py` now rewrites the URL to `postgresql+psycopg2://`.
-- **UTC timestamps:** SQLite drops timezone info, so the API marks naive timestamps as UTC before
-  returning them. Otherwise the browser would show the wrong local time.
-- **Tests isolated from production:** `conftest.py` forces `DATABASE_URL=sqlite://` before the app is
-  imported and refuses to run against anything else, because `backend/.env` holds the real Render URL.
-- **Startup guard:** the first Render deploy came up "healthy" but had no `DATABASE_URL`, so it
-  quietly seeded a throwaway SQLite file. I spotted this because the Welcome doc's timestamp matched
-  the deploy time. The app now refuses to start on Render without `DATABASE_URL` and logs the driver
-  (not the URL) at startup.
-- **Secret caught before commit:** the real database URL had been pasted into the tracked
-  `backend/.env.example`. It was moved to the gitignored `backend/.env` before anything was committed,
-  and every commit was checked for secrets.
-- **Bundle split:** the first build warned about a 590 kB bundle. TipTap and React were split into
-  separate cacheable chunks.
-- **Rejected a frontend-only / Supabase approach,** to keep a real Python API where the permission
-  rules live on the server and are tested.
-- **Render auto-deploy:** pushes never triggered a deploy. This was confirmed from the deploy and
-  event lists, worked around by triggering deploys manually, and documented.
+## Where AI genuinely saved time
+The biggest win was the boilerplate and wiring: the repo structure, FastAPI models and routes,
+the React pages, the TipTap toolbar, the GitHub Actions workflow, and the Render config. That would
+have taken me most of the timebox on its own. AI also made it cheap to write tests and a live smoke
+script, which I probably would have cut under time pressure otherwise.
 
-## How it was verified
-- **pytest:** 4 tests through the real API on in-memory SQLite, run twice to confirm they're repeatable.
-- **Local curl checks** after building the backend: login, 401/403/404 cases, and import.
-- **CORS preflights** from `localhost:5173` and the Pages origin (allowed), plus an unknown origin (rejected).
-- **Build checks:** asset paths use `/AJAIA_Ravi/`, and the bundle contains the Render URL and not localhost.
-- **Live smoke script** (`scripts/smoke_live.sh`): 15 checks against the deployed API, all passing.
-- **Manual two-browser checklist** (alice in a normal window, bob in incognito) on the live site.
+Writing a `CLAUDE.md` project brief at the start was one of the more useful decisions. Every
+phase began by reading it, so the stack, scope and gotchas stayed consistent across sessions.
 
-## My notes
+## What I changed, rejected, or caught
+AI output wasn't always right the first time. These were the main corrections:
 
+- **The wake-up banner bug.** On the live site, the "Waking up the server" banner never went away,
+  even though documents were loading. My first diagnosis, with Claude's help, blamed React StrictMode
+  or a bad success check. That was wrong. Instead of patching blindly, I had Claude Code reproduce
+  the bug first. The real cause was that the first `/health` request could hang forever during a
+  Render cold start, and nothing ever retried it. The fix added a timeout and retry, and now any
+  successful API call hides the banner. This was a good reminder to reproduce a bug before fixing it.
+- **Silent SQLite fallback in production.** The first Render deploy looked healthy, but it was
+  missing `DATABASE_URL` and had quietly created a throwaway SQLite database. I noticed because the
+  Welcome document's timestamp matched the deploy time exactly. Now the app refuses to start on
+  Render without a database URL and logs which driver it's using.
+- **A secret in the wrong file.** At one point the real database URL ended up in `.env.example`,
+  which is tracked by git. It was caught and moved to the ignored `.env` before anything was
+  committed, and I checked the history afterwards to be sure.
+- **Library changes newer than expected.** SQLAlchemy 2.1 switched its default Postgres driver, so
+  the first connection failed. We now name `psycopg2` explicitly. Similarly, TipTap v3 already
+  includes Underline in its starter kit, so adding it separately would have caused a duplicate.
+- **Tests that could have touched production.** Because my local `.env` points at the real
+  database, I made sure the tests force an in-memory SQLite database and refuse to run otherwise.
+- **Smaller fixes:** pinned Python 3.13 so local and Render match, marked timestamps as UTC (SQLite
+  drops the timezone), and split the frontend bundle after a size warning.
+- **An approach I rejected:** at one point I considered dropping the backend and having the frontend
+  talk directly to Supabase. I decided against it because I wanted the permission rules to live in
+  real, testable server code, which is what this assignment is evaluating.
+
+## How I verified the work
+I didn't take "done" at face value. For each layer I checked:
+- **Backend:** 4 pytest tests that run the full sharing flow through the real API (viewer vs editor,
+  revoking access, import validation, auth), run twice to confirm they're repeatable.
+- **API behaviour:** curl checks for the 401, 403 and 404 cases, plus CORS checks confirming the live
+  site is allowed and an unknown origin is rejected.
+- **Deployment:** confirmed the production build uses the right base path and points at the Render
+  API, not localhost.
+- **Live system:** a smoke script (`scripts/smoke_live.sh`) that runs 15 checks against the deployed
+  API.
+- **Real usage:** a full two-browser test on the live site, with Alice in a normal window and Bob in
+  incognito. I covered formatting, refresh, rename, import, sharing as viewer, upgrading to editor,
+  and removing access.
+
+## Looking back
+AI made it realistic to ship a full stack in a short timebox, but the moments that mattered most were
+the ones where I had to slow down and question the output: a deploy that looked healthy but wasn't,
+a secret in the wrong file, and a bug whose first explanation was wrong. If I did this again, I'd
+connect Render's GitHub integration on day one, so auto-deploy works, and I'd ask for a "reproduce
+first" step on every bug.
