@@ -1,0 +1,27 @@
+# Reference blueprint for reviewers: recreates the backend + database on Render's free tier.
+# The live service was created in the dashboard; this file documents the same setup.
+databases:
+  - name: ajaia-docs-db
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: ajaia-docs-api
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: FRONTEND_ORIGIN
+        sync: false # e.g. https://<github-user>.github.io (comma-separated, no path)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ajaia-docs-db
+          property: connectionString

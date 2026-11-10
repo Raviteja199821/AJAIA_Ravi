@@ -9,7 +9,13 @@ load_dotenv()
 
 
 def _database_url() -> str:
-    url = os.getenv("DATABASE_URL", "").strip() or "sqlite:///./local.db"
+    url = os.getenv("DATABASE_URL", "").strip()
+    if not url:
+        # Render sets RENDER=true. Falling back to SQLite there would silently lose all
+        # data on every restart, so fail the deploy loudly instead.
+        if os.getenv("RENDER"):
+            raise RuntimeError("DATABASE_URL is not set on Render; refusing to use SQLite")
+        url = "sqlite:///./local.db"
     # Render hands out postgres://, which SQLAlchemy no longer accepts. We also pin the
     # driver: SQLAlchemy 2.1 defaults postgresql:// to psycopg v3, but we ship psycopg2.
     for prefix in ("postgres://", "postgresql://"):

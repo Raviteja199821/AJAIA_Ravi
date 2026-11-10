@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -18,11 +19,14 @@ from .models import Document, Share, User
 from .seed import seed
 
 DEFAULT_TITLE = "Untitled document"
+log = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # engine / SessionLocal are module globals so tests can monkeypatch main.engine etc.
+    # Log the driver only (never the URL) so deploy logs show Postgres vs SQLite.
+    log.info("Database: %s+%s", engine.dialect.name, engine.dialect.driver)
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
         seed(db)
